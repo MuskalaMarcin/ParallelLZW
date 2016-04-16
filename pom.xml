@@ -8,6 +8,10 @@
     <artifactId>ParallelLZW</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <dependencies>
+
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
