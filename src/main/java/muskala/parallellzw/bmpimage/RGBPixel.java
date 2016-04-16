@@ -1,4 +1,4 @@
-package muskala.parallellzw.rgbimage;
+package muskala.parallellzw.bmpimage;
 
 import java.awt.*;
 
@@ -9,22 +9,15 @@ import java.awt.*;
  */
 public class RGBPixel
 {
-    private Point position;
     private byte red;
     private byte green;
     private byte blue;
 
-    public RGBPixel(Point position, byte red, byte green, byte blue)
+    public RGBPixel(byte red, byte green, byte blue)
     {
-	this.position = position;
 	this.red = red;
 	this.green = green;
 	this.blue = blue;
-    }
-
-    public Point getPosition()
-    {
-	return position;
     }
 
     public byte getRed()
