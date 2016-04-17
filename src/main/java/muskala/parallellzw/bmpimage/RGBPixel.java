@@ -61,4 +61,9 @@ public class RGBPixel
     {
 	return blue;
     }
+
+    public String toString()
+    {
+	return " red: " + (int)getRed() + " blue: " + (int)getBlue() + " green " + (int)getGreen();
+    }
 }

@@ -21,6 +21,11 @@ public class LZWDictionary
 	return dictionary.size();
     }
 
+    public boolean isFull()
+    {
+	return getSize() >= MAX_SIZE;
+    }
+
     public boolean remove(Integer key)
     {
 	int index = getIndex(key);
@@ -37,7 +42,7 @@ public class LZWDictionary
 
     public boolean put(DictionaryValue dv)
     {
-	if (getSize() >= MAX_SIZE)
+	if (isFull())
 	{
 	    return false;
 	}
