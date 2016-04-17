@@ -1,13 +1,11 @@
 package muskala.parallellzw;
 
 
-import muskala.parallellzw.dictionary.Dictionary;
-import muskala.parallellzw.dictionary.DictionaryValue;
+import muskala.parallellzw.bmpimage.BMPImage;
+import muskala.parallellzw.engine.LZWEngine;
+import muskala.parallellzw.mmimage.MMImage;
 
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
 
 /**
  * Created by Marcin Muskala on 04.04.2016.
@@ -16,7 +14,7 @@ public class Main
 {
     public static void main(String args[])
     {
-	Dictionary dictionary = new Dictionary();
+	/*LZWDictionary dictionary = new LZWDictionary();
 
 	LinkedList<Byte> values = new LinkedList<>();
 	values.add(new Byte("1"));
@@ -33,19 +31,27 @@ public class Main
 	values.add(new Byte("4"));
 	values.add(new Byte("5"));
 	values.add(new Byte("6"));
-	System.out.println(dictionary.getKey(values3));
+	System.out.println(dictionary.getKey(values3));*/
 
 
 
-	/*System.out.println("start " + new Date());
+	System.out.println("start " + new Date());
 	UI ui = new UI();
 	FileInputOutput fIO = new FileInputOutput();
-	byte[] test =fIO.getBytesFromFile("H:\\test2.bmp");
+	byte[] test =fIO.getBytesFromFile("H:\\test5.bmp");
 	BMPImage image = BMPImage.getBMPImage(test);
 	System.out.println("wczytano " + new Date());
-	byte[] output = image.toByteArray();
-	fIO.writeByteArrayToFile("H:\\output2.bmp", output);
-	System.out.println("koniec " + new Date());*/
+
+	LZWEngine lzwEngine = new LZWEngine();
+	fIO.writeByteArrayToFile("H:\\output5.mm", lzwEngine.BMPToMM(image).toByteArray());
+	System.out.println("zapisano mm " + new Date());
+
+	MMImage mmImage =  MMImage.getMMImage(fIO.getBytesFromFile("H:\\output5.mm"));
+
+	byte[] output = lzwEngine.MMToBMP(mmImage).toByteArray();
+	System.out.println("zdekompresowano mm " + new Date());
+	fIO.writeByteArrayToFile("H:\\output5.bmp", output);
+	System.out.println("koniec " + new Date());
 
     }
 }

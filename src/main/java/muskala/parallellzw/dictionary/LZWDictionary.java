@@ -5,13 +5,20 @@ import java.util.LinkedList;
 /**
  * Created by Marcin on 16.04.2016.
  */
-public class Dictionary
+public class LZWDictionary
 {
+    public static int MAX_SIZE = 4094;
+
     private LinkedList<DictionaryValue> dictionary;
 
-    public Dictionary()
+    public LZWDictionary()
     {
 	this.dictionary = new LinkedList<>();
+    }
+
+    public int getSize()
+    {
+	return dictionary.size();
     }
 
     public boolean remove(Integer key)
@@ -30,7 +37,7 @@ public class Dictionary
 
     public boolean put(DictionaryValue dv)
     {
-	if (containsValues(dv.getValues()) || containsKey(dv.getKey()))
+	if (getSize() >= MAX_SIZE)
 	{
 	    return false;
 	}

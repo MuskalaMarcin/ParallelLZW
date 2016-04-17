@@ -23,6 +23,21 @@ public class BMPImage
 	this.rgbPixelsList = rgbPixelsList;
     }
 
+    public BitmapFileHeader getBitmapFileHeader()
+    {
+	return bitmapFileHeader;
+    }
+
+    public BitmapInfoHeader getBitmapInfoHeader()
+    {
+	return bitmapInfoHeader;
+    }
+
+    public LinkedList<LinkedList<RGBPixel>> getRgbPixelsList()
+    {
+	return rgbPixelsList;
+    }
+
     public static BMPImage getBMPImage(byte[] data)
     {
 	BitmapFileHeader bitmapFileHeader = BitmapFileHeader.getBitmapInfoHeader(data);

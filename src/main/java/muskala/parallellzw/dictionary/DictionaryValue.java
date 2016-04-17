@@ -1,6 +1,7 @@
 package muskala.parallellzw.dictionary;
 
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 /**
  * Created by Marcin on 16.04.2016.
@@ -29,6 +30,11 @@ public class DictionaryValue
 
     public boolean equals(DictionaryValue dv)
     {
-	return this.values.equals(dv.getValues()) && this.key.equals(dv.getKey());
+	return this.getValues().equals(dv.getValues()) && this.getKey().equals(dv.getKey());
+    }
+
+    public LinkedList<Byte> getValuesCopy()
+    {
+	return this.getValues().stream().map(Byte::new).collect(Collectors.toCollection(LinkedList<Byte>::new));
     }
 }
