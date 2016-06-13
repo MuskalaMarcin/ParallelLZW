@@ -13,6 +13,7 @@ import muskala.parallellzw.mmimage.MMInfoHeader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
 /**
@@ -20,14 +21,92 @@ import java.util.stream.IntStream;
  */
 public class LZWEngine
 {
-    public MMImage BMPToMM(BMPImage bmpImage)
+    public MMImage BMPToMM(BMPImage bmpImage, int threadsNumber)
     {
 	BitmapInfoHeader bitmapInfoHeader = bmpImage.getBitmapInfoHeader();
-	LinkedList<LinkedList<RGBPixel>> rgbPixels = bmpImage.getRgbPixelsList();
+	List<List<RGBPixel>> rgbPixels = bmpImage.getRgbPixelsList();
 
-	LinkedList<Integer> component1 = compress(rgbPixels, RGBPixel.Color.RED);
-	LinkedList<Integer> component2 = compress(rgbPixels, RGBPixel.Color.GREEN);
-	LinkedList<Integer> component3 = compress(rgbPixels, RGBPixel.Color.BLUE);
+	ExecutorService service = Executors.newFixedThreadPool(threadsNumber);
+	List<Future<List<Integer>>> component1Output = new LinkedList<>();
+	List<Future<List<Integer>>> component2Output = new LinkedList<>();
+	List<Future<List<Integer>>> component3Output = new LinkedList<>();
+	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
+	for (int i = 0; i < 12; i++)
+	{
+	    List<List<RGBPixel>> pixelsPart = rgbPixels.subList(splitValue * i,
+			    (splitValue * (i + 1)) < rgbPixels.size() ? (splitValue * (i + 1)) : rgbPixels.size());
+	    component1Output.add(service.submit(new CompressLZW(pixelsPart, RGBPixel.Color.RED)));
+	    component2Output.add(service.submit(new CompressLZW(pixelsPart, RGBPixel.Color.GREEN)));
+	    component3Output.add(service.submit(new CompressLZW(pixelsPart, RGBPixel.Color.BLUE)));
+	}
+
+	boolean finished = false;
+	while (!finished)
+	{
+	    finished = true;
+	    for (Future<List<Integer>> task : component1Output)
+	    {
+		if (!task.isDone())
+		{
+		    finished = false;
+		    break;
+		}
+	    }
+	    for (Future<List<Integer>> task : component2Output)
+	    {
+		if (!task.isDone())
+		{
+		    finished = false;
+		    break;
+		}
+	    }
+	    for (Future<List<Integer>> task : component3Output)
+	    {
+		if (!task.isDone())
+		{
+		    finished = false;
+		    break;
+		}
+	    }
+	}
+
+	service.shutdown();
+	LinkedList<Integer> component1 = new LinkedList<>();
+	LinkedList<Integer> component2 = new LinkedList<>();
+	LinkedList<Integer> component3 = new LinkedList<>();
+	for (Future<List<Integer>> task : component1Output)
+	{
+	    try
+	    {
+		component1.addAll(task.get());
+	    }
+	    catch (ExecutionException | InterruptedException e)
+	    {
+		e.printStackTrace();
+	    }
+	}
+	for (Future<List<Integer>> task : component2Output)
+	{
+	    try
+	    {
+		component2.addAll(task.get());
+	    }
+	    catch (ExecutionException | InterruptedException e)
+	    {
+		e.printStackTrace();
+	    }
+	}
+	for (Future<List<Integer>> task : component3Output)
+	{
+	    try
+	    {
+		component3.addAll(task.get());
+	    }
+	    catch (ExecutionException | InterruptedException e)
+	    {
+		e.printStackTrace();
+	    }
+	}
 
 	int mmSize = 20;
 	int mmWidth = bitmapInfoHeader.getBiWidth();
@@ -46,11 +125,11 @@ public class LZWEngine
 	return new MMImage(mmFileHeader, mmInfoHeader, component1, component2, component3);
     }
 
-    public BMPImage MMToBMP(MMImage mmImage)
+    public BMPImage MMToBMP(MMImage mmImage, int threadsNumber)
     {
 	short bfType = 0x4d42;
-	int bfSize = 14 + 40 + (3 * mmImage.getMmInfoHeader().getMmWidth() * mmImage.getMmInfoHeader().getMmHeight())
-			+ 192;
+	int bfSize = 14 + 40 + (3 * (mmImage.getMmInfoHeader().getMmWidth()
+			+ mmImage.getMmInfoHeader().getMmWidth() % 4) * mmImage.getMmInfoHeader().getMmHeight()) + 200;
 	short bfReserved1 = 0;
 	short bfReserved2 = 0;
 	int bfOffBits = 14 + 40;
@@ -62,7 +141,7 @@ public class LZWEngine
 	short biPlanes = 1;
 	short biBitCount = 24;
 	int biCompression = 0;
-	int biSizeImage = 3 * mmImage.getMmInfoHeader().getMmWidth() * mmImage.getMmInfoHeader().getMmHeight() + 192;
+	int biSizeImage = 3 * biWidth * (biHeight + biHeight % 4);
 	int biXPelsPerMeter = 0x0ec4;
 	int biYPelsPerMeter = 0x0ec4;
 	byte biClrImportant = 0;
@@ -72,196 +151,151 @@ public class LZWEngine
 			biCompression, biSizeImage, biXPelsPerMeter, biYPelsPerMeter, biClrImportant, biClrRotation,
 			biReserved);
 
-	LinkedList<LinkedList<RGBPixel>> rgbPixels = new LinkedList<>();
-	for (int y = 0; y < biWidth; y++)
+	ExecutorService service = Executors.newFixedThreadPool(threadsNumber);
+
+	List<Future<List<List<RGBPixel>>>> output = new LinkedList<>();
+	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
+	int i = 0;
+	for (List<Integer> a : splitList(mmImage.getComponent1Data()))
 	{
-	    LinkedList<RGBPixel> row = new LinkedList<>();
-	    for (int x = 0; x < biHeight; x++)
-	    {
-		row.add(new RGBPixel());
-	    }
-	    rgbPixels.add(row);
+	    output.add(service.submit(new DecompressLZW(a, RGBPixel.Color.RED, bitmapInfoHeader.getBiWidth(),
+			    bitmapInfoHeader.getBiHeight(), i * splitValue)));
+	    i++;
 	}
-	decompress(mmImage.getComponent1Data(), rgbPixels, RGBPixel.Color.RED, 0, 0);
-	decompress(mmImage.getComponent2Data(), rgbPixels, RGBPixel.Color.GREEN, 0, 0);
-	decompress(mmImage.getComponent3Data(), rgbPixels, RGBPixel.Color.BLUE, 0, 0);
+	i = 0;
+	for (List<Integer> a : splitList(mmImage.getComponent2Data()))
+	{
+	    output.add(service.submit(new DecompressLZW(a, RGBPixel.Color.GREEN, bitmapInfoHeader.getBiWidth(),
+			    bitmapInfoHeader.getBiHeight(), i * splitValue)));
+	    i++;
+	}
+	i = 0;
+	for (List<Integer> a : splitList(mmImage.getComponent3Data()))
+	{
+	    output.add(service.submit(new DecompressLZW(a, RGBPixel.Color.BLUE, bitmapInfoHeader.getBiWidth(),
+			    bitmapInfoHeader.getBiHeight(), i * splitValue)));
+	    i++;
+	}
+
+	boolean finished = false;
+	while (!finished)
+	{
+	    finished = true;
+	    for (Future<List<List<RGBPixel>>> task : output)
+	    {
+		if (!task.isDone())
+		{
+		    finished = false;
+		    break;
+		}
+	    }
+	}
+	service.shutdown();
+
+	List<List<RGBPixel>> rgbPixels = getData(output, bitmapInfoHeader.getBiWidth(), bitmapInfoHeader.getBiHeight());
 
 	return new BMPImage(bitmapFileHeader, bitmapInfoHeader, rgbPixels);
     }
 
-    public LinkedList<Integer> compress(LinkedList<LinkedList<RGBPixel>> pixels, RGBPixel.Color color)
+    private List<List<RGBPixel>> getData(List<Future<List<List<RGBPixel>>>> output, int width, int height)
     {
-	LZWDictionary lzwDictionary = new LZWDictionary();
-	LinkedList<Integer> output = new LinkedList<>();
+	System.out.println("start1: " + new Date());
+	List<List<RGBPixel>> rgbPixels = new LinkedList<>();
 
-	IntStream.rangeClosed(0, 255).boxed().forEach(i -> {
-	    LinkedList<Byte> values = new LinkedList<>();
-	    values.add(new Byte(i.byteValue()));
-	    lzwDictionary.put(new DictionaryValue(i, values));
-	});
-
-	byte znak = 0;
-	LinkedList<Byte> slowo = new LinkedList<>();
-	for (int y = 0; y < pixels.size(); y++)
+	List<List<List<RGBPixel>>> combinedLists = new LinkedList<>();
+	for (Future<List<List<RGBPixel>>> task : output)
 	{
-	    LinkedList<RGBPixel> row = pixels.get(y);
-	    for (int x = 0; x < row.size(); x++)
+	    try
 	    {
-		LinkedList<Byte> tmp = new LinkedList<>();
-		RGBPixel rgbPixel = row.get(x);
-		switch (color)
-		{
-		case BLUE:
-		    znak = rgbPixel.getBlue();
-		    break;
-		case RED:
-		    znak = rgbPixel.getRed();
-		    break;
-		case GREEN:
-		    znak = rgbPixel.getGreen();
-		    break;
-		}
-
-		tmp.addAll(slowo);
-		tmp.add(znak);
-
-		if (lzwDictionary.getKey(tmp).equals(-1))
-		{
-		    output.add(lzwDictionary.getKey(slowo));
-		    lzwDictionary.put(new DictionaryValue(lzwDictionary.getSize(), tmp));
-		    slowo.clear();
-		    slowo.add(znak);
-		}
-		else
-		{
-		    slowo = tmp;
-		}
-		System.out.println("X: " + x + " y: " + y + " " + new Date());
+		combinedLists.add(task.get());
+	    }
+	    catch (Exception e)
+	    {
+		e.printStackTrace();
 	    }
 	}
 
-	return output;
+	for (int y = 0; y < width; y++)
+	{
+	    LinkedList<RGBPixel> row = new LinkedList<>();
+	    for (int x = 0; x < height; x++)
+	    {
+		row.add(new RGBPixel(true));
+	    }
+	    rgbPixels.add(row);
+	}
+	System.out.println("start2: " + new Date());
+	combinedLists = new LinkedList<>();
+	for (Future<List<List<RGBPixel>>> task : output)
+	{
+	    try
+	    {
+		combinedLists.add(task.get());
+	    }
+	    catch (Exception e)
+	    {
+		e.printStackTrace();
+	    }
+	}
+
+	System.out.println("koniec21: " + new Date());
+	for (List<List<RGBPixel>> a : combinedLists)
+	{
+	    int x = 0;
+	    for (List<RGBPixel> b : a)
+	    {
+		int y = 0;
+		for (RGBPixel c : b)
+		{
+		    RGBPixel out = rgbPixels.get(x).get(y);
+		    Byte red = c.getRed();
+		    if (red == null)
+		    {
+			Byte green = c.getGreen();
+			if (green == null)
+			{
+			    Byte blue = c.getBlue();
+			    if (blue != null)
+			    {
+				out.setBlue(blue);
+			    }
+			}
+			else
+			{
+			    out.setGreen(green);
+			}
+		    }
+		    else
+		    {
+			out.setRed(red);
+		    }
+		    y++;
+		}
+		x++;
+	    }
+	}
+
+	System.out.println("koniec22: " + new Date());
+
+	return rgbPixels;
     }
 
-    public void decompress(LinkedList<Integer> data, LinkedList<LinkedList<RGBPixel>> rgbPixels, RGBPixel.Color color,
-		    int x, int y)
+    private List<List<Integer>> splitList(List<Integer> data)
     {
-	LZWDictionary lzwDictionary = new LZWDictionary();
-	int height = rgbPixels.getFirst().size();
-
-	LinkedList<Byte> slowo = new LinkedList<>();
-	IntStream.rangeClosed(0, 255).boxed().forEach(i -> {
-	    LinkedList<Byte> values = new LinkedList<>();
-	    values.add(new Byte(i.byteValue()));
-	    lzwDictionary.put(new DictionaryValue(i, values));
-	});
-
-	switch (color)
+	List<List<Integer>> outData = new LinkedList<>();
+	List<Integer> partialList = new LinkedList<>();
+	for (Integer d : data)
 	{
-	case RED:
-	    rgbPixels.get(y).get(x).setRed(data.getFirst().byteValue());
-	    break;
-	case GREEN:
-	    rgbPixels.get(y).get(x).setGreen(data.getFirst().byteValue());
-	    break;
-	case BLUE:
-	    rgbPixels.get(y).get(x).setBlue(data.getFirst().byteValue());
-	    break;
-	}
-	slowo.add(data.getFirst().byteValue());
-	x++;
-	if (x >= height)
-	{
-	    x = 0;
-	    y++;
-	}
-	for (int i = 1; i < data.size(); i++)
-	{
-	    DictionaryValue value = lzwDictionary.getElement(data.get(i));
-	    LinkedList<Byte> entry = new LinkedList<>();
-	    if (value == null)
+	    if (d == LZWDictionary.MAX_SIZE - 1)
 	    {
-		entry.addAll(slowo);
-		entry.add(slowo.getFirst());
-		for (Byte b : entry)
-		{
-		    switch (color)
-		    {
-		    case RED:
-			rgbPixels.get(y).get(x).setRed(b);
-			break;
-		    case GREEN:
-			rgbPixels.get(y).get(x).setGreen(b);
-			break;
-		    case BLUE:
-			rgbPixels.get(y).get(x).setBlue(b);
-			break;
-		    }
-		    x++;
-		    if (x >= height)
-		    {
-			x = 0;
-			y++;
-		    }
-		}
-
-		if (!lzwDictionary.isFull())
-		{
-		    LinkedList<Byte> newValues = new LinkedList<>();
-		    newValues.addAll(entry);
-		    DictionaryValue newValue = new DictionaryValue(lzwDictionary.getSize(), newValues);
-		    lzwDictionary.put(newValue);
-		}
+		outData.add(partialList);
+		partialList = new LinkedList<>();
 	    }
 	    else
 	    {
-		entry.addAll(value.getValues());
-		for (Byte b : entry)
-		{
-		    switch (color)
-		    {
-		    case RED:
-			rgbPixels.get(y).get(x).setRed(b);
-			break;
-		    case GREEN:
-			rgbPixels.get(y).get(x).setGreen(b);
-			break;
-		    case BLUE:
-			rgbPixels.get(y).get(x).setBlue(b);
-			break;
-		    }
-		    x++;
-		    if (x >= height)
-		    {
-			x = 0;
-			y++;
-		    }
-		}
-
-		if (!lzwDictionary.isFull())
-		{
-		    LinkedList<Byte> newValues = new LinkedList<>();
-		    newValues.addAll(slowo);
-		    newValues.add(entry.getFirst());
-		    DictionaryValue newValue = new DictionaryValue(lzwDictionary.getSize(), newValues);
-		    lzwDictionary.put(newValue);
-		}
+		partialList.add(d);
 	    }
-	    slowo = entry;
 	}
-
-	System.out.println(x + "      " + y);
-	switch (color)
-	{
-	case RED:
-	    rgbPixels.get(y).get(x).setRed(slowo.getLast());
-	    break;
-	case GREEN:
-	    rgbPixels.get(y).get(x).setGreen(slowo.getLast());
-	    break;
-	case BLUE:
-	    rgbPixels.get(y).get(x).setBlue(slowo.getLast());
-	    break;
-	}
+	return outData;
     }
 }

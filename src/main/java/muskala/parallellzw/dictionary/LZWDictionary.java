@@ -1,6 +1,7 @@
 package muskala.parallellzw.dictionary;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Marcin on 16.04.2016.
@@ -9,7 +10,7 @@ public class LZWDictionary
 {
     public static int MAX_SIZE = 4094;
 
-    private LinkedList<DictionaryValue> dictionary;
+    private List<DictionaryValue> dictionary;
 
     public LZWDictionary()
     {
@@ -23,7 +24,7 @@ public class LZWDictionary
 
     public boolean isFull()
     {
-	return getSize() >= MAX_SIZE;
+	return getSize() >= MAX_SIZE - 2;
     }
 
     public boolean remove(Integer key)
@@ -55,9 +56,8 @@ public class LZWDictionary
 
     public DictionaryValue getElement(Integer key)
     {
-	for (int i = 0; i < dictionary.size(); i++)
+	for (DictionaryValue dv : dictionary)
 	{
-	    DictionaryValue dv = dictionary.get(i);
 	    if (dv.getKey().equals(key))
 	    {
 		return dv;
@@ -66,12 +66,12 @@ public class LZWDictionary
 	return null;
     }
 
-    public Integer getKey(LinkedList<Byte> values)
+    public Integer getKey(List<Byte> values)
     {
-	for (int i = 0; i < dictionary.size(); i++)
+	int valuesSize = values.size();
+	for (DictionaryValue dv : dictionary)
 	{
-	    DictionaryValue dv = dictionary.get(i);
-	    if (dv.getValues().equals(values))
+	    if (valuesSize == dv.getValuesSize() && dv.getValues().equals(values))
 	    {
 		return dv.getKey();
 	    }
@@ -91,7 +91,7 @@ public class LZWDictionary
 	return false;
     }
 
-    public boolean containsValues(LinkedList<Byte> values)
+    public boolean containsValues(List<Byte> values)
     {
 	for (int i = 0; i < dictionary.size(); i++)
 	{

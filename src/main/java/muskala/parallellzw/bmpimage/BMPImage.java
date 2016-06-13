@@ -3,6 +3,7 @@ package muskala.parallellzw.bmpimage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Class representing bmp 24bit image.
@@ -13,10 +14,10 @@ public class BMPImage
 {
     private BitmapFileHeader bitmapFileHeader;
     private BitmapInfoHeader bitmapInfoHeader;
-    private LinkedList<LinkedList<RGBPixel>> rgbPixelsList;
+    private List<List<RGBPixel>> rgbPixelsList;
 
     public BMPImage(BitmapFileHeader bitmapFileHeader, BitmapInfoHeader bitmapInfoHeader,
-		    LinkedList<LinkedList<RGBPixel>> rgbPixelsList)
+		    List<List<RGBPixel>> rgbPixelsList)
     {
 	this.bitmapFileHeader = bitmapFileHeader;
 	this.bitmapInfoHeader = bitmapInfoHeader;
@@ -33,7 +34,7 @@ public class BMPImage
 	return bitmapInfoHeader;
     }
 
-    public LinkedList<LinkedList<RGBPixel>> getRgbPixelsList()
+    public List<List<RGBPixel>> getRgbPixelsList()
     {
 	return rgbPixelsList;
     }
@@ -42,7 +43,7 @@ public class BMPImage
     {
 	BitmapFileHeader bitmapFileHeader = BitmapFileHeader.getBitmapInfoHeader(data);
 	BitmapInfoHeader bitmapInfoHeader = BitmapInfoHeader.getBitmapInfoHeader(data);
-	LinkedList<LinkedList<RGBPixel>> rgbPixelsList = new LinkedList<>();
+	List<List<RGBPixel>> rgbPixelsList = new LinkedList<>();
 
 	ByteBuffer byteBuffer = ByteBuffer.allocate(bitmapFileHeader.getBfSize());
 	byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -51,7 +52,7 @@ public class BMPImage
 	byteBuffer.flip();
 	for (int y = 0; y < bitmapInfoHeader.getBiWidth(); y++)
 	{
-	    LinkedList<RGBPixel> rgbPixelsRow = new LinkedList<>();
+	    List<RGBPixel> rgbPixelsRow = new LinkedList<>();
 	    for (int x = 0; x < bitmapInfoHeader.getBiHeight(); x++)
 	    {
 		byte blue = byteBuffer.get();
@@ -74,13 +75,27 @@ public class BMPImage
 
 	for (int y = 0; y < bitmapInfoHeader.getBiWidth(); y++)
 	{
-	    LinkedList<RGBPixel> rgbPixelsRow = rgbPixelsList.get(y);
+	    List<RGBPixel> rgbPixelsRow = rgbPixelsList.get(y);
 	    for (int x = 0; x < bitmapInfoHeader.getBiHeight(); x++)
 	    {
-		byteBuffer.put(rgbPixelsRow.get(x).getBlue());
-		byteBuffer.put(rgbPixelsRow.get(x).getGreen());
-		byteBuffer.put(rgbPixelsRow.get(x).getRed());
+		try
+		{
+
+		    byteBuffer.put(rgbPixelsRow.get(x).getBlue());
+		    byteBuffer.put(rgbPixelsRow.get(x).getGreen());
+		    byteBuffer.put(rgbPixelsRow.get(x).getRed());
+		}
+		catch (Exception e)
+		{
+		    System.out.println("x: " + x +" y " +y);
+		    e.printStackTrace();
+		}
 	    }
+	    /*int lackingPixels = rgbPixelsRow.size() % 4;
+	    for (int i = 0; i < lackingPixels; i++)
+	    {
+		byteBuffer.put((byte) 0x0);
+	    }*/
 	}
 
 	return byteBuffer.array();

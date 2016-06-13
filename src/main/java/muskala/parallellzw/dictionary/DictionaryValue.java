@@ -1,7 +1,6 @@
 package muskala.parallellzw.dictionary;
 
-import java.util.LinkedList;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * Created by Marcin on 16.04.2016.
@@ -9,13 +8,14 @@ import java.util.stream.Collectors;
 public class DictionaryValue
 {
     private Integer key;
-    private LinkedList<Byte> values;
+    private List<Byte> values;
+    private int valuesSize;
 
-    public DictionaryValue(Integer key, LinkedList<Byte> values)
+    public DictionaryValue(Integer key, List<Byte> values)
     {
 	this.key = key;
-	this.values = new LinkedList<>();
-	values.forEach(v -> this.values.add(new Byte(v)));
+	this.values = values;
+	valuesSize = values.size();
     }
 
     public Integer getKey()
@@ -23,7 +23,12 @@ public class DictionaryValue
 	return key;
     }
 
-    public LinkedList<Byte> getValues()
+    public int getValuesSize()
+    {
+	return valuesSize;
+    }
+
+    public List<Byte> getValues()
     {
 	return values;
     }
@@ -31,10 +36,5 @@ public class DictionaryValue
     public boolean equals(DictionaryValue dv)
     {
 	return this.getValues().equals(dv.getValues()) && this.getKey().equals(dv.getKey());
-    }
-
-    public LinkedList<Byte> getValuesCopy()
-    {
-	return this.getValues().stream().map(Byte::new).collect(Collectors.toCollection(LinkedList<Byte>::new));
     }
 }

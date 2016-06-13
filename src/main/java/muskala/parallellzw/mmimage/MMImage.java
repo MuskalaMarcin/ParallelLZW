@@ -105,7 +105,7 @@ public class MMImage
 	    byteBuffer.put(get3BytesFromInt(tmp));
 	}
 	boolean comp3Flag = false;
-	if (component2Data.size() % 2 == 1)
+	if (component2Data.size() % 2 == (comp2Flag ? 0 : 1))
 	{
 	    int tmp = component3Data.getFirst() + (component2Data.getLast() << 12);
 	    byteBuffer.put(get3BytesFromInt(tmp));
@@ -117,7 +117,7 @@ public class MMImage
 	    int tmp = component3Data.get(i + 1) + (component3Data.get(i) << 12);
 	    byteBuffer.put(get3BytesFromInt(tmp));
 	}
-	if (component3Data.size() % 2 == 1)
+	if (component3Data.size() % 2 == (comp3Flag ? 0 : 1))
 	{
 	    int tmp = component3Data.getLast() << 12;
 	    byteBuffer.put(get3BytesFromInt(tmp));
@@ -136,7 +136,6 @@ public class MMImage
 	    tmp1 = tmp2 >> 12;
 	    componentData.add(tmp1);
 	    tmp2 = tmp2 - (tmp1 << 12);
-	    System.out.println("tmp1 " + tmp1 + " tmp2 " + tmp2);
 	    if (tmp1 != LZWDictionary.MAX_SIZE) componentData.add(tmp2);
 	}
 	componentData.removeLast();
