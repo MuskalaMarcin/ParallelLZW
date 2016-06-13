@@ -2,7 +2,7 @@ package muskala.parallellzw.bmpimage;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,7 +43,7 @@ public class BMPImage
     {
 	BitmapFileHeader bitmapFileHeader = BitmapFileHeader.getBitmapInfoHeader(data);
 	BitmapInfoHeader bitmapInfoHeader = BitmapInfoHeader.getBitmapInfoHeader(data);
-	List<List<RGBPixel>> rgbPixelsList = new LinkedList<>();
+	List<List<RGBPixel>> rgbPixelsList = new ArrayList<>();
 
 	ByteBuffer byteBuffer = ByteBuffer.allocate(bitmapFileHeader.getBfSize());
 	byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -52,7 +52,7 @@ public class BMPImage
 	byteBuffer.flip();
 	for (int y = 0; y < bitmapInfoHeader.getBiWidth(); y++)
 	{
-	    List<RGBPixel> rgbPixelsRow = new LinkedList<>();
+	    List<RGBPixel> rgbPixelsRow = new ArrayList<>();
 	    for (int x = 0; x < bitmapInfoHeader.getBiHeight(); x++)
 	    {
 		byte blue = byteBuffer.get();

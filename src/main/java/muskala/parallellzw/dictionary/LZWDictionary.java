@@ -1,6 +1,6 @@
 package muskala.parallellzw.dictionary;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,7 +14,7 @@ public class LZWDictionary
 
     public LZWDictionary()
     {
-	this.dictionary = new LinkedList<>();
+	this.dictionary = new ArrayList<>();
     }
 
     public int getSize()

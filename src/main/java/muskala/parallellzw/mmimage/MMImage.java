@@ -4,8 +4,9 @@ import muskala.parallellzw.dictionary.LZWDictionary;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Marcin on 16.04.2016.
@@ -14,14 +15,14 @@ public class MMImage
 {
     private MMFileHeader mmFileHeader;
     private MMInfoHeader mmInfoHeader;
-    private LinkedList<Integer> component1Data;
-    private LinkedList<Integer> component2Data;
-    private LinkedList<Integer> component3Data;
+    private List<Integer> component1Data;
+    private List<Integer> component2Data;
+    private List<Integer> component3Data;
 
     private static int counter = 0;
 
-    public MMImage(MMFileHeader mmFileHeader, MMInfoHeader mmInfoHeader, LinkedList<Integer> component1Data,
-		    LinkedList<Integer> component2Data, LinkedList<Integer> component3Data)
+    public MMImage(MMFileHeader mmFileHeader, MMInfoHeader mmInfoHeader, List<Integer> component1Data,
+		    List<Integer> component2Data, List<Integer> component3Data)
     {
 	this.mmFileHeader = mmFileHeader;
 	this.mmInfoHeader = mmInfoHeader;
@@ -40,17 +41,17 @@ public class MMImage
 	return mmInfoHeader;
     }
 
-    public LinkedList<Integer> getComponent1Data()
+    public List<Integer> getComponent1Data()
     {
 	return component1Data;
     }
 
-    public LinkedList<Integer> getComponent2Data()
+    public List<Integer> getComponent2Data()
     {
 	return component2Data;
     }
 
-    public LinkedList<Integer> getComponent3Data()
+    public List<Integer> getComponent3Data()
     {
 	return component3Data;
     }
@@ -59,16 +60,16 @@ public class MMImage
     {
 	MMFileHeader mmFileHeader = MMFileHeader.getMMFileHeader(data);
 	MMInfoHeader mmInfoHeader = MMInfoHeader.getMMInfoHeader(data);
-	LinkedList<Integer> component1Data = new LinkedList<>();
-	LinkedList<Integer> component2Data = new LinkedList<>();
-	LinkedList<Integer> component3Data = new LinkedList<>();
+	List<Integer> component1Data = new ArrayList<>();
+	List<Integer> component2Data = new ArrayList<>();
+	List<Integer> component3Data = new ArrayList<>();
 
 	ByteBuffer byteBuffer = ByteBuffer.allocate(mmFileHeader.getMmFileSize() - mmFileHeader.getMmOffset());
 	byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
 	byteBuffer.put(data, mmFileHeader.getMmOffset(), mmFileHeader.getMmFileSize() - mmFileHeader.getMmOffset());
 	byteBuffer.flip();
 
-	readBytesFromFile(component1Data,component2Data ,byteBuffer);
+	readBytesFromFile(component1Data, component2Data, byteBuffer);
 	readBytesFromFile(component2Data, component3Data, byteBuffer);
 	readBytesFromFile(component3Data, null, byteBuffer);
 
@@ -94,7 +95,7 @@ public class MMImage
 	boolean comp2Flag = false;
 	if (component1Data.size() % 2 == 1)
 	{
-	    int tmp = component2Data.getFirst() + (component1Data.getLast() << 12);
+	    int tmp = component2Data.get(0) + (component1Data.get(component1Data.size()) << 12);
 	    byteBuffer.put(get3BytesFromInt(tmp));
 	    comp2Flag = true;
 	}
@@ -107,7 +108,7 @@ public class MMImage
 	boolean comp3Flag = false;
 	if (component2Data.size() % 2 == (comp2Flag ? 0 : 1))
 	{
-	    int tmp = component3Data.getFirst() + (component2Data.getLast() << 12);
+	    int tmp = component3Data.get(0) + (component2Data.get(component2Data.size() - 1) << 12);
 	    byteBuffer.put(get3BytesFromInt(tmp));
 	    comp3Flag = true;
 	}
@@ -119,17 +120,18 @@ public class MMImage
 	}
 	if (component3Data.size() % 2 == (comp3Flag ? 0 : 1))
 	{
-	    int tmp = component3Data.getLast() << 12;
+	    int tmp = component3Data.get(component3Data.size() - 1) << 12;
 	    byteBuffer.put(get3BytesFromInt(tmp));
 	}
 
 	return byteBuffer.array();
     }
 
-    private static void readBytesFromFile(LinkedList<Integer> componentData,LinkedList<Integer> componentNextData, ByteBuffer byteBuffer)
+    private static void readBytesFromFile(List<Integer> componentData, List<Integer> componentNextData,
+		    ByteBuffer byteBuffer)
     {
-	int tmp1=0;
-	int tmp2=0;
+	int tmp1 = 0;
+	int tmp2 = 0;
 	while (tmp1 != LZWDictionary.MAX_SIZE && tmp2 != LZWDictionary.MAX_SIZE)
 	{
 	    tmp2 = get3BytesInt(byteBuffer);
@@ -138,7 +140,7 @@ public class MMImage
 	    tmp2 = tmp2 - (tmp1 << 12);
 	    if (tmp1 != LZWDictionary.MAX_SIZE) componentData.add(tmp2);
 	}
-	componentData.removeLast();
+	componentData.remove(componentData.size() - 1);
 	if (tmp1 == LZWDictionary.MAX_SIZE && componentNextData != null)
 	{
 	    componentNextData.add(tmp2);

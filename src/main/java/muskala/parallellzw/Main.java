@@ -35,7 +35,7 @@ public class Main
 
 	BMPImage out = lzwEngine.MMToBMP(mmImage, threadsNumber);
 	boolean allDone = false;
-	for (int y = 0; y < out.getBitmapInfoHeader().getBiWidth(); y++)
+	/*for (int y = 0; y < out.getBitmapInfoHeader().getBiWidth(); y++)
 	{
 	    for (int x = 0; x < out.getBitmapInfoHeader().getBiHeight(); x++)
 	    {
@@ -54,7 +54,7 @@ public class Main
 				    + " 2. " + out.getRgbPixelsList().get(y).get(x).toString());
 		}
 	    }
-	}
+	}*/
 	System.out.println("bledy: " + allDone);
 	byte[] output = out.toByteArray();
 	System.out.println("zdekompresowano mm " + new Date());

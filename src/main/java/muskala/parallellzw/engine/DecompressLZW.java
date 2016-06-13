@@ -4,7 +4,7 @@ import muskala.parallellzw.bmpimage.RGBPixel;
 import muskala.parallellzw.dictionary.DictionaryValue;
 import muskala.parallellzw.dictionary.LZWDictionary;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
@@ -31,10 +31,10 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 
     @Override public List<List<RGBPixel>> call() throws Exception
     {
-	List<List<RGBPixel>> rgbPixels = new LinkedList<>();
+	List<List<RGBPixel>> rgbPixels = new ArrayList<>();
 	for (int y = 0; y < width; y++)
 	{
-	    List<RGBPixel> row = new LinkedList<>();
+	    List<RGBPixel> row = new ArrayList<>();
 	    for (int x = 0; x < height; x++)
 	    {
 		row.add(new RGBPixel());
@@ -44,10 +44,10 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 	int x = 0, y = startHeight;
 	LZWDictionary lzwDictionary = new LZWDictionary();
 
-	LinkedList<Byte> slowo = new LinkedList<>();
+	List<Byte> slowo = new ArrayList<>();
 	IntStream.rangeClosed(0, 255).boxed().forEach(i -> {
-	    List<Byte> values = new LinkedList<>();
-	    values.add(new Byte(i.byteValue()));
+	    List<Byte> values = new ArrayList<>();
+	    values.add(i.byteValue());
 	    lzwDictionary.put(new DictionaryValue(i, values));
 	});
 
@@ -71,15 +71,14 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 	    y++;
 	}
 
-
 	for (int i = 1; i < data.size(); i++)
 	{
 	    DictionaryValue value = lzwDictionary.getElement(data.get(i));
-	    LinkedList<Byte> entry = new LinkedList<>();
+	    List<Byte> entry = new ArrayList<>();
 	    if (value == null)
 	    {
 		entry.addAll(slowo);
-		entry.add(slowo.getFirst());
+		entry.add(slowo.get(0));
 		for (Byte b : entry)
 		{
 		    switch (color)
@@ -103,7 +102,7 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 		}
 		if (!lzwDictionary.isFull())
 		{
-		    LinkedList<Byte> newValues = new LinkedList<>();
+		    List<Byte> newValues = new ArrayList<>();
 		    newValues.addAll(entry);
 		    DictionaryValue newValue = new DictionaryValue(lzwDictionary.getSize(), newValues);
 		    lzwDictionary.put(newValue);
@@ -136,9 +135,9 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 
 		if (!lzwDictionary.isFull())
 		{
-		    LinkedList<Byte> newValues = new LinkedList<>();
+		    List<Byte> newValues = new ArrayList<>();
 		    newValues.addAll(slowo);
-		    newValues.add(entry.getFirst());
+		    newValues.add(entry.get(0));
 		    DictionaryValue newValue = new DictionaryValue(lzwDictionary.getSize(), newValues);
 		    lzwDictionary.put(newValue);
 		}
@@ -149,13 +148,13 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 	switch (color)
 	{
 	case RED:
-	    rgbPixels.get(y).get(x).setRed(slowo.getLast());
+	    rgbPixels.get(y).get(x).setRed(slowo.get(slowo.size() - 1));
 	    break;
 	case GREEN:
-	    rgbPixels.get(y).get(x).setGreen(slowo.getLast());
+	    rgbPixels.get(y).get(x).setGreen(slowo.get(slowo.size() - 1));
 	    break;
 	case BLUE:
-	    rgbPixels.get(y).get(x).setBlue(slowo.getLast());
+	    rgbPixels.get(y).get(x).setBlue(slowo.get(slowo.size() - 1));
 	    break;
 	}
 	return rgbPixels;

@@ -5,7 +5,6 @@ import muskala.parallellzw.dictionary.DictionaryValue;
 import muskala.parallellzw.dictionary.LZWDictionary;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
@@ -27,16 +26,16 @@ public class CompressLZW implements Callable<List<Integer>>
     @Override public List<Integer> call() throws Exception
     {
 	LZWDictionary lzwDictionary = new LZWDictionary();
-	List<Integer> output = new LinkedList<>();
+	List<Integer> output = new ArrayList<>();
 
 	IntStream.rangeClosed(0, 255).boxed().forEach(i -> {
-	    List<Byte> values = new LinkedList<>();
-	    values.add(new Byte(i.byteValue()));
+	    List<Byte> values = new ArrayList<>();
+	    values.add(i.byteValue());
 	    lzwDictionary.put(new DictionaryValue(i, values));
 	});
 
 	byte znak = 0;
-	List<Byte> slowo = new LinkedList<>();
+	List<Byte> slowo = new ArrayList<>();
 	for (int y = 0; y < pixels.size(); y++)
 	{
 	    List<RGBPixel> row = pixels.get(y);

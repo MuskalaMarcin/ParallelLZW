@@ -4,7 +4,6 @@ import muskala.parallellzw.bmpimage.BMPImage;
 import muskala.parallellzw.bmpimage.BitmapFileHeader;
 import muskala.parallellzw.bmpimage.BitmapInfoHeader;
 import muskala.parallellzw.bmpimage.RGBPixel;
-import muskala.parallellzw.dictionary.DictionaryValue;
 import muskala.parallellzw.dictionary.LZWDictionary;
 import muskala.parallellzw.mmimage.MMFileHeader;
 import muskala.parallellzw.mmimage.MMImage;
@@ -12,9 +11,13 @@ import muskala.parallellzw.mmimage.MMInfoHeader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by Marcin on 16.04.2016.
@@ -27,9 +30,9 @@ public class LZWEngine
 	List<List<RGBPixel>> rgbPixels = bmpImage.getRgbPixelsList();
 
 	ExecutorService service = Executors.newFixedThreadPool(threadsNumber);
-	List<Future<List<Integer>>> component1Output = new LinkedList<>();
-	List<Future<List<Integer>>> component2Output = new LinkedList<>();
-	List<Future<List<Integer>>> component3Output = new LinkedList<>();
+	List<Future<List<Integer>>> component1Output = new ArrayList<>();
+	List<Future<List<Integer>>> component2Output = new ArrayList<>();
+	List<Future<List<Integer>>> component3Output = new ArrayList<>();
 	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
 	for (int i = 0; i < 12; i++)
 	{
@@ -71,9 +74,9 @@ public class LZWEngine
 	}
 
 	service.shutdown();
-	LinkedList<Integer> component1 = new LinkedList<>();
-	LinkedList<Integer> component2 = new LinkedList<>();
-	LinkedList<Integer> component3 = new LinkedList<>();
+	List<Integer> component1 = new ArrayList<>();
+	List<Integer> component2 = new ArrayList<>();
+	List<Integer> component3 = new ArrayList<>();
 	for (Future<List<Integer>> task : component1Output)
 	{
 	    try
@@ -153,7 +156,7 @@ public class LZWEngine
 
 	ExecutorService service = Executors.newFixedThreadPool(threadsNumber);
 
-	List<Future<List<List<RGBPixel>>>> output = new LinkedList<>();
+	List<Future<List<List<RGBPixel>>>> output = new ArrayList<>();
 	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
 	int i = 0;
 	for (List<Integer> a : splitList(mmImage.getComponent1Data()))
@@ -200,9 +203,9 @@ public class LZWEngine
     private List<List<RGBPixel>> getData(List<Future<List<List<RGBPixel>>>> output, int width, int height)
     {
 	System.out.println("start1: " + new Date());
-	List<List<RGBPixel>> rgbPixels = new LinkedList<>();
+	List<List<RGBPixel>> rgbPixels = new ArrayList<>();
 
-	List<List<List<RGBPixel>>> combinedLists = new LinkedList<>();
+	List<List<List<RGBPixel>>> combinedLists = new ArrayList<>();
 	for (Future<List<List<RGBPixel>>> task : output)
 	{
 	    try
@@ -217,7 +220,7 @@ public class LZWEngine
 
 	for (int y = 0; y < width; y++)
 	{
-	    LinkedList<RGBPixel> row = new LinkedList<>();
+	    List<RGBPixel> row = new ArrayList<>();
 	    for (int x = 0; x < height; x++)
 	    {
 		row.add(new RGBPixel(true));
@@ -225,7 +228,7 @@ public class LZWEngine
 	    rgbPixels.add(row);
 	}
 	System.out.println("start2: " + new Date());
-	combinedLists = new LinkedList<>();
+	combinedLists = new ArrayList<>();
 	for (Future<List<List<RGBPixel>>> task : output)
 	{
 	    try
@@ -282,14 +285,14 @@ public class LZWEngine
 
     private List<List<Integer>> splitList(List<Integer> data)
     {
-	List<List<Integer>> outData = new LinkedList<>();
-	List<Integer> partialList = new LinkedList<>();
+	List<List<Integer>> outData = new ArrayList<>();
+	List<Integer> partialList = new ArrayList<>();
 	for (Integer d : data)
 	{
 	    if (d == LZWDictionary.MAX_SIZE - 1)
 	    {
 		outData.add(partialList);
-		partialList = new LinkedList<>();
+		partialList = new ArrayList<>();
 	    }
 	    else
 	    {
