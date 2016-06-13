@@ -33,7 +33,7 @@ public class DictionaryValue
 	return values;
     }
 
-    public boolean equals(DictionaryValue dv)
+    public boolean isEqualTo(DictionaryValue dv)
     {
 	return this.getValues().equals(dv.getValues()) && this.getKey().equals(dv.getKey());
     }

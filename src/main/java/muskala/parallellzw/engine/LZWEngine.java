@@ -34,7 +34,7 @@ public class LZWEngine
 	List<Future<List<Integer>>> component2Output = new ArrayList<>();
 	List<Future<List<Integer>>> component3Output = new ArrayList<>();
 	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < 13; i++)
 	{
 	    List<List<RGBPixel>> pixelsPart = rgbPixels.subList(splitValue * i,
 			    (splitValue * (i + 1)) < rgbPixels.size() ? (splitValue * (i + 1)) : rgbPixels.size());
@@ -202,7 +202,6 @@ public class LZWEngine
 
     private List<List<RGBPixel>> getData(List<Future<List<List<RGBPixel>>>> output, int width, int height)
     {
-	System.out.println("start1: " + new Date());
 	List<List<RGBPixel>> rgbPixels = new ArrayList<>();
 
 	List<List<List<RGBPixel>>> combinedLists = new ArrayList<>();
@@ -227,7 +226,6 @@ public class LZWEngine
 	    }
 	    rgbPixels.add(row);
 	}
-	System.out.println("start2: " + new Date());
 	combinedLists = new ArrayList<>();
 	for (Future<List<List<RGBPixel>>> task : output)
 	{
@@ -241,7 +239,6 @@ public class LZWEngine
 	    }
 	}
 
-	System.out.println("koniec21: " + new Date());
 	for (List<List<RGBPixel>> a : combinedLists)
 	{
 	    int x = 0;
@@ -277,8 +274,6 @@ public class LZWEngine
 		x++;
 	    }
 	}
-
-	System.out.println("koniec22: " + new Date());
 
 	return rgbPixels;
     }

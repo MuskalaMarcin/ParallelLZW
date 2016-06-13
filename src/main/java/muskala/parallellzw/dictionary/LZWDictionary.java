@@ -83,7 +83,7 @@ public class LZWDictionary
     {
 	for (int i = 0; i < dictionary.size(); i++)
 	{
-	    if (dictionary.get(i).equals(dv))
+	    if (dictionary.get(i).isEqualTo(dv))
 	    {
 		return true;
 	    }

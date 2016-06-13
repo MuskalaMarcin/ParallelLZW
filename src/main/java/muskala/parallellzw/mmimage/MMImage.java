@@ -95,7 +95,7 @@ public class MMImage
 	boolean comp2Flag = false;
 	if (component1Data.size() % 2 == 1)
 	{
-	    int tmp = component2Data.get(0) + (component1Data.get(component1Data.size()) << 12);
+	    int tmp = component2Data.get(0) + (component1Data.get(component1Data.size() - 1) << 12);
 	    byteBuffer.put(get3BytesFromInt(tmp));
 	    comp2Flag = true;
 	}
