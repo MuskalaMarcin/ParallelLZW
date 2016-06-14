@@ -8,6 +8,7 @@ import muskala.parallellzw.mmimage.MMImage;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -16,51 +17,51 @@ import java.util.Date;
  */
 public class Main
 {
+    private UI ui;
+    private FileInputOutput fIO;
+    private LZWEngine lzwEngine;
+    private int threadsNumber;
+
+    private Main()
+    {
+	this.ui = new UI();
+	this.fIO = new FileInputOutput();
+	this.lzwEngine = new LZWEngine();
+    }
+
+    private void run()
+    {
+	ui.writeHelloMessage();
+	if (ui.getOperationType())
+	{
+	    threadsNumber = ui.getThreadsNumber();
+	    Path filePath = ui.getFilePath(false);
+	    BMPImage image = fIO.getBMPImageFromFile(filePath);
+	    System.out.println("Wczytano obraz.");
+	    MMImage outputImage = lzwEngine.BMPToMM(image, threadsNumber);
+	    System.out.println("Kompresja zakończona");
+	    Path outputPath = ui.getFilePath(true);
+	    fIO.saveMMImage(outputImage, outputPath);
+	    System.out.println("Plik został zapisany.");
+	}
+	else
+	{
+	    threadsNumber = ui.getThreadsNumber();
+	    Path filePath = ui.getFilePath(false);
+	    MMImage image = fIO.getMMImageFromFile(filePath);
+	    System.out.println("Wczytano obraz.");
+	    BMPImage outputImage = lzwEngine.MMToBMP(image, threadsNumber);
+	    System.out.println("Dekompresja zakończona");
+	    Path outputPath = ui.getFilePath(true);
+	    fIO.saveBMPImage(outputImage, outputPath);
+	    System.out.println("Plik został zapisany.");
+	}
+    }
+
     public static void main(String args[])
     {
-
-	int threadsNumber = 4;
-	System.out.println("start " + new Date());
-	UI ui = new UI();
-	FileInputOutput fIO = new FileInputOutput();
-	byte[] test = fIO.getBytesFromFile("D:\\test.bmp");
-	BMPImage image = BMPImage.getBMPImage(test);
-	System.out.println("wczytano " + new Date());
-
-	LZWEngine lzwEngine = new LZWEngine();
-	fIO.writeByteArrayToFile("D:\\output5.mm", lzwEngine.BMPToMM(image, threadsNumber).toByteArray());
-	System.out.println("zapisano mm " + new Date());
-
-	MMImage mmImage = MMImage.getMMImage(fIO.getBytesFromFile("D:\\output5.mm"));
-
-	BMPImage out = lzwEngine.MMToBMP(mmImage, threadsNumber);
-	boolean allDone = false;
-	/*for (int y = 0; y < out.getBitmapInfoHeader().getBiWidth(); y++)
-	{
-	    for (int x = 0; x < out.getBitmapInfoHeader().getBiHeight(); x++)
-	    {
-		if (image.getRgbPixelsList().get(y).get(x).getGreen()
-				.compareTo(out.getRgbPixelsList().get(y).get(x).getGreen()) != 0
-				||
-				image.getRgbPixelsList().get(y).get(x).getRed()
-						.compareTo(out.getRgbPixelsList().get(y).get(x)
-								.getRed()) != 0 ||
-				image.getRgbPixelsList().get(y).get(x).getBlue()
-						.compareTo(out.getRgbPixelsList().get(y).get(x)
-								.getBlue()) != 0)
-		{
-		    allDone = true;
-		    System.out.println("x " + x + " y " + y + " 1. " + image.getRgbPixelsList().get(y).get(x).toString()
-				    + " 2. " + out.getRgbPixelsList().get(y).get(x).toString());
-		}
-	    }
-	}*/
-	System.out.println("bledy: " + allDone);
-	byte[] output = out.toByteArray();
-	System.out.println("zdekompresowano mm " + new Date());
-	fIO.writeByteArrayToFile("D:\\output5.bmp", output);
-	System.out.println("koniec " + new Date());
-
+	Main main = new Main();
+	main.run();
     }
 }
 

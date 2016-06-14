@@ -60,20 +60,28 @@ public class MMImage
     {
 	MMFileHeader mmFileHeader = MMFileHeader.getMMFileHeader(data);
 	MMInfoHeader mmInfoHeader = MMInfoHeader.getMMInfoHeader(data);
-	List<Integer> component1Data = new ArrayList<>();
-	List<Integer> component2Data = new ArrayList<>();
-	List<Integer> component3Data = new ArrayList<>();
+	if (mmFileHeader.getMmSignature() != ByteBuffer.allocate(3).order(ByteOrder.LITTLE_ENDIAN)
+			.put(new String("MM").getBytes()).getShort(0))
+	{
+	    throw new UnsupportedOperationException("Wrong file type!");
+	}
+	else
+	{
+	    List<Integer> component1Data = new ArrayList<>();
+	    List<Integer> component2Data = new ArrayList<>();
+	    List<Integer> component3Data = new ArrayList<>();
 
-	ByteBuffer byteBuffer = ByteBuffer.allocate(mmFileHeader.getMmFileSize() - mmFileHeader.getMmOffset());
-	byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-	byteBuffer.put(data, mmFileHeader.getMmOffset(), mmFileHeader.getMmFileSize() - mmFileHeader.getMmOffset());
-	byteBuffer.flip();
+	    ByteBuffer byteBuffer = ByteBuffer.allocate(mmFileHeader.getMmFileSize() - mmFileHeader.getMmOffset());
+	    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+	    byteBuffer.put(data, mmFileHeader.getMmOffset(), mmFileHeader.getMmFileSize() - mmFileHeader.getMmOffset());
+	    byteBuffer.flip();
 
-	readBytesFromFile(component1Data, component2Data, byteBuffer);
-	readBytesFromFile(component2Data, component3Data, byteBuffer);
-	readBytesFromFile(component3Data, null, byteBuffer);
+	    readBytesFromFile(component1Data, component2Data, byteBuffer);
+	    readBytesFromFile(component2Data, component3Data, byteBuffer);
+	    readBytesFromFile(component3Data, null, byteBuffer);
 
-	return new MMImage(mmFileHeader, mmInfoHeader, component1Data, component2Data, component3Data);
+	    return new MMImage(mmFileHeader, mmInfoHeader, component1Data, component2Data, component3Data);
+	}
     }
 
     public byte[] toByteArray()

@@ -11,6 +11,7 @@ import muskala.parallellzw.mmimage.MMInfoHeader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +27,9 @@ public class LZWEngine
 {
     public MMImage BMPToMM(BMPImage bmpImage, int threadsNumber)
     {
+	System.out.println("Rozpoczynam kompresję");
+	long startTime = System.currentTimeMillis();
+
 	BitmapInfoHeader bitmapInfoHeader = bmpImage.getBitmapInfoHeader();
 	List<List<RGBPixel>> rgbPixels = bmpImage.getRgbPixelsList();
 
@@ -111,48 +115,44 @@ public class LZWEngine
 	    }
 	}
 
+	MMInfoHeader mmInfoHeader = getMMInfoHeader(bitmapInfoHeader, component1.size(), component2.size(),
+			component3.size());
+	MMFileHeader mmFileHeader = getMMFileHeader(mmInfoHeader);
+
+	System.out.println("Czas kompresji: " + new SimpleDateFormat("mm:ss:SSS")
+			.format(new Date(System.currentTimeMillis() - startTime)));
+
+	return new MMImage(mmFileHeader, mmInfoHeader, component1, component2, component3);
+    }
+
+    private MMInfoHeader getMMInfoHeader(BitmapInfoHeader bitmapInfoHeader, int component1Size, int component2Size,
+		    int component3Size)
+    {
 	int mmSize = 20;
 	int mmWidth = bitmapInfoHeader.getBiWidth();
 	int mmHeight = bitmapInfoHeader.getBiHeight();
 	short mmColorSpace = (short) 0;
 	short mmFilter = (short) 0;
-	int mmImageSize = Math.round((component1.size() + component2.size() + component3.size()) * 1.5f);
-	MMInfoHeader mmInfoHeader = new MMInfoHeader(mmSize, mmWidth, mmHeight, mmColorSpace, mmFilter, mmImageSize);
+	int mmImageSize = Math.round((component1Size + component2Size + component3Size) * 1.5f);
+	return new MMInfoHeader(mmSize, mmWidth, mmHeight, mmColorSpace, mmFilter, mmImageSize);
+    }
 
+    private MMFileHeader getMMFileHeader(MMInfoHeader mmInfoHeader)
+    {
 	short mmSignature = ByteBuffer.allocate(3).order(ByteOrder.LITTLE_ENDIAN).put(new String("MM").getBytes())
 			.getShort(0);
 	int mmFileSize = 39 + mmInfoHeader.getMmImageSize();
 	int mmOffset = 30;
-	MMFileHeader mmFileHeader = new MMFileHeader(mmSignature, mmFileSize, mmOffset);
-
-	return new MMImage(mmFileHeader, mmInfoHeader, component1, component2, component3);
+	return new MMFileHeader(mmSignature, mmFileSize, mmOffset);
     }
 
     public BMPImage MMToBMP(MMImage mmImage, int threadsNumber)
     {
-	short bfType = 0x4d42;
-	int bfSize = 14 + 40 + (3 * (mmImage.getMmInfoHeader().getMmWidth()
-			+ mmImage.getMmInfoHeader().getMmWidth() % 4) * mmImage.getMmInfoHeader().getMmHeight()) + 200;
-	short bfReserved1 = 0;
-	short bfReserved2 = 0;
-	int bfOffBits = 14 + 40;
-	BitmapFileHeader bitmapFileHeader = new BitmapFileHeader(bfType, bfSize, bfReserved1, bfReserved2, bfOffBits);
+	System.out.println("Rozpoczynam dekompresję");
+	long startTime = System.currentTimeMillis();
 
-	int biSize = 40;
-	int biWidth = mmImage.getMmInfoHeader().getMmWidth();
-	int biHeight = mmImage.getMmInfoHeader().getMmHeight();
-	short biPlanes = 1;
-	short biBitCount = 24;
-	int biCompression = 0;
-	int biSizeImage = 3 * biWidth * (biHeight + biHeight % 4);
-	int biXPelsPerMeter = 0x0ec4;
-	int biYPelsPerMeter = 0x0ec4;
-	byte biClrImportant = 0;
-	byte biClrRotation = 0;
-	short biReserved = 0;
-	BitmapInfoHeader bitmapInfoHeader = new BitmapInfoHeader(biSize, biWidth, biHeight, biPlanes, biBitCount,
-			biCompression, biSizeImage, biXPelsPerMeter, biYPelsPerMeter, biClrImportant, biClrRotation,
-			biReserved);
+	BitmapFileHeader bitmapFileHeader = getBitmapFileHeader(mmImage.getMmInfoHeader());
+	BitmapInfoHeader bitmapInfoHeader = getBitmapInfoHeader(mmImage.getMmInfoHeader());
 
 	ExecutorService service = Executors.newFixedThreadPool(threadsNumber);
 
@@ -195,12 +195,46 @@ public class LZWEngine
 	}
 	service.shutdown();
 
-	List<List<RGBPixel>> rgbPixels = getData(output, bitmapInfoHeader.getBiWidth(), bitmapInfoHeader.getBiHeight());
+	List<List<RGBPixel>> rgbPixels = combineOutputData(output, bitmapInfoHeader.getBiWidth(),
+			bitmapInfoHeader.getBiHeight());
+
+	System.out.println("Czas dekompresji: " + new SimpleDateFormat("mm:ss:SSS")
+			.format(new Date(System.currentTimeMillis() - startTime)));
 
 	return new BMPImage(bitmapFileHeader, bitmapInfoHeader, rgbPixels);
     }
 
-    private List<List<RGBPixel>> getData(List<Future<List<List<RGBPixel>>>> output, int width, int height)
+    private BitmapFileHeader getBitmapFileHeader(MMInfoHeader mmInfoHeader)
+    {
+	short bfType = 0x4d42;
+	int bfSize = 14 + 40 + (3 * (mmInfoHeader.getMmWidth() + mmInfoHeader.getMmWidth() % 4) * mmInfoHeader
+			.getMmHeight()) + 200;
+	short bfReserved1 = 0;
+	short bfReserved2 = 0;
+	int bfOffBits = 14 + 40;
+	return new BitmapFileHeader(bfType, bfSize, bfReserved1, bfReserved2, bfOffBits);
+    }
+
+    private BitmapInfoHeader getBitmapInfoHeader(MMInfoHeader mmInfoHeader)
+    {
+	int biSize = 40;
+	int biWidth = mmInfoHeader.getMmWidth();
+	int biHeight = mmInfoHeader.getMmHeight();
+	short biPlanes = 1;
+	short biBitCount = 24;
+	int biCompression = 0;
+	int biSizeImage = 3 * biWidth * (biHeight + biHeight % 4);
+	int biXPelsPerMeter = 0x0ec4;
+	int biYPelsPerMeter = 0x0ec4;
+	byte biClrImportant = 0;
+	byte biClrRotation = 0;
+	short biReserved = 0;
+	return new BitmapInfoHeader(biSize, biWidth, biHeight, biPlanes, biBitCount,
+			biCompression, biSizeImage, biXPelsPerMeter, biYPelsPerMeter, biClrImportant, biClrRotation,
+			biReserved);
+    }
+
+    private List<List<RGBPixel>> combineOutputData(List<Future<List<List<RGBPixel>>>> output, int width, int height)
     {
 	List<List<RGBPixel>> rgbPixels = new ArrayList<>();
 

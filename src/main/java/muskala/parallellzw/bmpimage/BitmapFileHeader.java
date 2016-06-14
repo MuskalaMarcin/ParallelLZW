@@ -64,7 +64,7 @@ public class BitmapFileHeader
 	return byteBuffer.array();
     }
 
-    public static BitmapFileHeader getBitmapInfoHeader(byte[] data)
+    public static BitmapFileHeader getBitmapFileHeader(byte[] data)
     {
 	ByteBuffer byteBuffer = ByteBuffer.allocate(14);
 	byteBuffer.order(ByteOrder.LITTLE_ENDIAN);

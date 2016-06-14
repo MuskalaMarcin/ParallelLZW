@@ -41,29 +41,36 @@ public class BMPImage
 
     public static BMPImage getBMPImage(byte[] data)
     {
-	BitmapFileHeader bitmapFileHeader = BitmapFileHeader.getBitmapInfoHeader(data);
+	BitmapFileHeader bitmapFileHeader = BitmapFileHeader.getBitmapFileHeader(data);
 	BitmapInfoHeader bitmapInfoHeader = BitmapInfoHeader.getBitmapInfoHeader(data);
-	List<List<RGBPixel>> rgbPixelsList = new ArrayList<>();
-
-	ByteBuffer byteBuffer = ByteBuffer.allocate(bitmapFileHeader.getBfSize());
-	byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-	byteBuffer.put(data, bitmapFileHeader.getBfOffBits(),
-			bitmapFileHeader.getBfSize() - bitmapFileHeader.getBfOffBits());
-	byteBuffer.flip();
-	for (int y = 0; y < bitmapInfoHeader.getBiWidth(); y++)
+	if (bitmapFileHeader.getBfType() != 0x4d42 || bitmapInfoHeader.getBiBitCount() != 24)
 	{
-	    List<RGBPixel> rgbPixelsRow = new ArrayList<>();
-	    for (int x = 0; x < bitmapInfoHeader.getBiHeight(); x++)
-	    {
-		byte blue = byteBuffer.get();
-		byte green = byteBuffer.get();
-		byte red = byteBuffer.get();
-		rgbPixelsRow.add(new RGBPixel(red, green, blue));
-	    }
-	    rgbPixelsList.add(rgbPixelsRow);
+	    throw new UnsupportedOperationException("Wrong file type.");
 	}
+	else
+	{
+	    List<List<RGBPixel>> rgbPixelsList = new ArrayList<>();
 
-	return new BMPImage(bitmapFileHeader, bitmapInfoHeader, rgbPixelsList);
+	    ByteBuffer byteBuffer = ByteBuffer.allocate(bitmapFileHeader.getBfSize());
+	    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+	    byteBuffer.put(data, bitmapFileHeader.getBfOffBits(),
+			    bitmapFileHeader.getBfSize() - bitmapFileHeader.getBfOffBits());
+	    byteBuffer.flip();
+	    for (int y = 0; y < bitmapInfoHeader.getBiWidth(); y++)
+	    {
+		List<RGBPixel> rgbPixelsRow = new ArrayList<>();
+		for (int x = 0; x < bitmapInfoHeader.getBiHeight(); x++)
+		{
+		    byte blue = byteBuffer.get();
+		    byte green = byteBuffer.get();
+		    byte red = byteBuffer.get();
+		    rgbPixelsRow.add(new RGBPixel(red, green, blue));
+		}
+		rgbPixelsList.add(rgbPixelsRow);
+	    }
+
+	    return new BMPImage(bitmapFileHeader, bitmapInfoHeader, rgbPixelsList);
+	}
     }
 
     public byte[] toByteArray()
@@ -80,22 +87,15 @@ public class BMPImage
 	    {
 		try
 		{
-
 		    byteBuffer.put(rgbPixelsRow.get(x).getBlue());
 		    byteBuffer.put(rgbPixelsRow.get(x).getGreen());
 		    byteBuffer.put(rgbPixelsRow.get(x).getRed());
 		}
 		catch (Exception e)
 		{
-		    System.out.println("x: " + x +" y " +y);
 		    e.printStackTrace();
 		}
 	    }
-	    /*int lackingPixels = rgbPixelsRow.size() % 4;
-	    for (int i = 0; i < lackingPixels; i++)
-	    {
-		byteBuffer.put((byte) 0x0);
-	    }*/
 	}
 
 	return byteBuffer.array();
