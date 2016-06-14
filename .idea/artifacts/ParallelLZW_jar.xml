@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ParallelLZW:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ParallelLZW_jar</output-path>
+    <root id="archive" name="ParallelLZW.jar">
+      <element id="module-output" name="ParallelLZW" />
+    </root>
+  </artifact>
+</component>

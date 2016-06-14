@@ -121,6 +121,7 @@ public class LZWEngine
 
 	System.out.println("Czas kompresji: " + new SimpleDateFormat("mm:ss:SSS")
 			.format(new Date(System.currentTimeMillis() - startTime)));
+	System.out.println(System.currentTimeMillis() - startTime);
 
 	return new MMImage(mmFileHeader, mmInfoHeader, component1, component2, component3);
     }
@@ -200,6 +201,7 @@ public class LZWEngine
 
 	System.out.println("Czas dekompresji: " + new SimpleDateFormat("mm:ss:SSS")
 			.format(new Date(System.currentTimeMillis() - startTime)));
+	System.out.println(System.currentTimeMillis() - startTime);
 
 	return new BMPImage(bitmapFileHeader, bitmapInfoHeader, rgbPixels);
     }
