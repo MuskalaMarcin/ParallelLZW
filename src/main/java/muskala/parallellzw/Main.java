@@ -1,16 +1,10 @@
 package muskala.parallellzw;
 
 import muskala.parallellzw.bmpimage.BMPImage;
-import muskala.parallellzw.bmpimage.BitmapFileHeader;
-import muskala.parallellzw.bmpimage.BitmapInfoHeader;
 import muskala.parallellzw.engine.LZWEngine;
 import muskala.parallellzw.mmimage.MMImage;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Date;
 
 /**
  * Created by Marcin Muskala on 04.04.2016.

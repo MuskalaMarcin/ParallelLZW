@@ -3,14 +3,9 @@ package muskala.parallellzw;
 import muskala.parallellzw.bmpimage.BMPImage;
 import muskala.parallellzw.mmimage.MMImage;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Date;
 
 /**
  * Created by Marcin on 16.04.2016.

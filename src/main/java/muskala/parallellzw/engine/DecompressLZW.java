@@ -145,18 +145,6 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 	    slowo = entry;
 	}
 
-	/*switch (color)
-	{
-	case RED:
-	    rgbPixels.get(y).get(x).setRed(slowo.get(slowo.size() - 1));
-	    break;
-	case GREEN:
-	    rgbPixels.get(y).get(x).setGreen(slowo.get(slowo.size() - 1));
-	    break;
-	case BLUE:
-	    rgbPixels.get(y).get(x).setBlue(slowo.get(slowo.size() - 1));
-	    break;
-	}*/
 	return rgbPixels;
     }
 }
