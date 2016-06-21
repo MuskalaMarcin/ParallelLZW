@@ -37,6 +37,7 @@ public class LZWEngine
 	List<Future<List<Integer>>> component1Output = new ArrayList<>();
 	List<Future<List<Integer>>> component2Output = new ArrayList<>();
 	List<Future<List<Integer>>> component3Output = new ArrayList<>();
+	long startTime2 = System.currentTimeMillis();
 	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
 	for (int i = 0; i < 13; i++)
 	{
@@ -78,6 +79,11 @@ public class LZWEngine
 	}
 
 	service.shutdown();
+
+	System.out.println("Czas rownolegly: " + new SimpleDateFormat("mm:ss:SSS")
+			.format(new Date(System.currentTimeMillis() - startTime2)));
+	System.out.println(System.currentTimeMillis() - startTime2);
+
 	List<Integer> component1 = new ArrayList<>();
 	List<Integer> component2 = new ArrayList<>();
 	List<Integer> component3 = new ArrayList<>();
@@ -160,6 +166,7 @@ public class LZWEngine
 	List<Future<List<List<RGBPixel>>>> output = new ArrayList<>();
 	int splitValue = bitmapInfoHeader.getBiWidth() / 12;
 	int i = 0;
+	long startTime2 = System.currentTimeMillis();
 	for (List<Integer> a : splitList(mmImage.getComponent1Data()))
 	{
 	    output.add(service.submit(new DecompressLZW(a, RGBPixel.Color.RED, bitmapInfoHeader.getBiWidth(),
@@ -195,6 +202,10 @@ public class LZWEngine
 	    }
 	}
 	service.shutdown();
+
+	System.out.println("Czas rownolgely: " + new SimpleDateFormat("mm:ss:SSS")
+			.format(new Date(System.currentTimeMillis() - startTime2)));
+	System.out.println(System.currentTimeMillis() - startTime2);
 
 	List<List<RGBPixel>> rgbPixels = combineOutputData(output, bitmapInfoHeader.getBiWidth(),
 			bitmapInfoHeader.getBiHeight());

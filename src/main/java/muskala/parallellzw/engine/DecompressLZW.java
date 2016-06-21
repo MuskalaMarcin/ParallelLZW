@@ -29,7 +29,8 @@ public class DecompressLZW implements Callable<List<List<RGBPixel>>>
 	this.startHeight = startHeight;
     }
 
-    @Override public List<List<RGBPixel>> call() throws Exception
+    @Override
+    public List<List<RGBPixel>> call() throws Exception
     {
 	List<List<RGBPixel>> rgbPixels = new ArrayList<>();
 	for (int y = 0; y < width; y++)
